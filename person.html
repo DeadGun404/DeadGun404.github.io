@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>FIC</title>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="css/animate.css">
+    <link rel="stylesheet" href="css/icomoon.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/flexslider.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/modernizr-2.6.2.min.js"></script>
+</head>
+<body>
+<div id="fh5co-page">
+    <aside id="fh5co-aside" role="complementary" class="border js-fullheight">
+        <h1 id="fh5co-logo">
+            <a href="index.html">
+                <img src="images/logo.svg" alt="FIC Logo">
+            </a>
+        </h1>
+        <nav id="fh5co-main-menu" role="navigation">
+            <ul>
+                <li><a href="index.html">Главная</a></li>
+                <li><a href="blog.html">Институты</a></li>
+                <li><a href="person.html">Персоны</a></li>
+                <li><a href="event.html">События</a></li>
+            </ul>
+        </nav>
+        <div class="fh5co-footer">
+            <p><small>&copy; ФИЦ Коми НЦ УрО РАН, 2023</small></p>
+            <ul>
+                <li><a href="#"><i class="icon-vk"></i></a></li>
+                <li><a href="#"><i class="icon-telegram"></i></a></li>
+                <li><a href="#"><i class="icon-youtube"></i></a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <div id="fh5co-main">
+        <div class="fh5co-narrow-content">
+            <h2 class="fh5co-heading animate-box" data-animate-effect="fadeInLeft">Персоны</h2>
+            <!-- Фильтр -->
+            <div class="filter-container animate-box" data-animate-effect="fadeInLeft">
+                <label for="science-filter">Науки:</label>
+                <select id="science-filter">
+                    <option value="">Все</option>
+                    <option value="1">Химические науки</option>
+                    <option value="2">Физические науки</option>
+                    <option value="3">Геологические науки</option>
+                    <option value="4">Биологические науки</option>
+                    <option value="7">Исторические науки</option>
+                    <option value="8">Филологические науки</option>
+                    <option value="11">Библиотечное дело</option>
+                    <option value="12">Президиум</option>
+                    <option value="13">Экономические науки</option>
+                    <option value="14">Энергетика</option>
+                    <option value="15">Сельскохозяйственные науки</option>
+                </select>
+            </div>
+            <!-- /Фильтр -->
+            <div class="row row-bottom-padded-md" id="persons-container">
+                <!-- Контент будет динамически добавлен сюда -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/jquery.easing.1.3.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/jquery.waypoints.min.js"></script>
+<script src="js/jquery.flexslider-min.js"></script>
+<script src="js/main.js"></script>
+<script>
+    $(document).ready(function() {
+        const personIDs = [259, 263, 357]; // ID персон
+        const container = $('#persons-container'); // Контейнер для персон
+    
+        // Функция для загрузки данных по каждой персоне
+        async function loadPersons(scienceFilter = '') {
+            try {
+                for (const personID of personIDs) {
+                    const response = await $.getJSON(`json/PersonId${personID}.json`);
+                    displayPerson(response, scienceFilter);
+                }
+            } catch (error) {
+                console.log('Ошибка загрузки данных:', error);
+            }
+        }
+    
+        // Функция для отображения данных о персоне
+        function displayPerson(data, scienceFilter) {
+            if (data.person) {
+                const person = data.person[0]; // Предполагаем, что данные по одной персоне
+                const personFile = data.personFile.find(file => file.id === person.id);
+                const imageUrl = personFile ? personFile.pathWeb : 'images/default.jpg'; // URL изображения
+    
+                // Проверяем соответствие фильтру
+                if (!scienceFilter || person.sci_theme.some(theme => theme.id === scienceFilter)) {
+                    const personHtml = `
+                        <div class="col-md-4">
+                            <div class="person-details">
+                                <img src="${imageUrl}" alt="${person.F} ${person.I} ${person.O}">
+                                <h3><a href="about-person.html?id=${person.id}">${person.F} ${person.I} ${person.O}</a></h3>
+                                <p>${person.dol}</p>
+                                <p>${person.comment}</p>
+                            </div>
+                        </div>
+                    `;
+                    container.append(personHtml);
+                }
+            } else {
+                container.append('<p>Данные не найдены.</p>');
+            }
+        }
+    
+        // Загружаем данные по всем персонам при загрузке страницы
+        loadPersons();
+    
+        // Обработчик изменения фильтра наук
+        $('#science-filter').change(function() {
+            const selectedScience = $(this).val();
+            container.empty(); // Очищаем контейнер
+            loadPersons(selectedScience); // Перезагружаем персоны с учетом фильтра
+        });
+    });
+</script>
+</body>
+</html>
