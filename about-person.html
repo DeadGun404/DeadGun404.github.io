@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>FIC</title>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="css/animate.css">
+    <link rel="stylesheet" href="css/icomoon.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/flexslider.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/modernizr-2.6.2.min.js"></script>
+    <style>
+        body {
+            color: #333333;
+        }
+        .person-event {
+            margin-bottom: 10px;
+        }
+        .person-event a {
+            display: inline-block;
+            margin-right: 5px;
+            padding: 5px 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #333;
+            text-decoration: none;
+        }
+        .person-event a:hover {
+            background-color: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+<div id="fh5co-page">
+    <aside id="fh5co-aside" role="complementary" class="border js-fullheight">
+        <h1 id="fh5co-logo">
+            <a href="index.html">
+                <img src="images/logo.svg" alt="FIC Logo">
+            </a>
+        </h1>
+        <nav id="fh5co-main-menu" role="navigation">
+            <ul>
+                <li><a href="index.html">Главная</a></li>
+                <li><a href="blog.html">Институты</a></li>
+                <li><a href="person.html">Персоны</a></li>
+                <li><a href="event.html">События</a></li>
+            </ul>
+        </nav>
+        <div class="fh5co-footer">
+            <p><small>&copy; ФИЦ Коми НЦ УрО РАН, 2023</small></p>
+            <ul>
+                <li><a href="#"><i class="icon-vk"></i></a></li>
+                <li><a href="#"><i class="icon-telegram"></i></a></li>
+                <li><a href="#"><i class="icon-youtube"></i></a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <div id="fh5co-main">
+        <div class="fh5co-narrow-content">
+            <h2 class="fh5co-heading animate-box" data-animate-effect="fadeInLeft">Информация о персоне</h2>
+            <div id="person-details" class="animate-box" data-animate-effect="fadeInLeft">
+                <!-- Контент будет динамически добавлен сюда -->
+            </div>
+            <h2 class="fh5co-heading animate-box" data-animate-effect="fadeInLeft">События, в которых участвовала персона</h2>
+            <div id="person-event" class="animate-box" data-animate-effect="fadeInLeft">
+                <!-- Контент будет динамически добавлен сюда -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/jquery.easing.1.3.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/jquery.waypoints.min.js"></script>
+<script src="js/jquery.flexslider-min.js"></script>
+<script src="js/main.js"></script>
+<script>
+    $(document).ready(function() {
+        const detailsContainer = $('#person-details');
+        const eventContainer = $('#person-event');
+
+        // Функция для получения параметра из URL
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Функция для форматирования даты в формат дд.мм.гггг
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === '0000-00-00') return 'неизвестно';
+            const date = new Date(dateStr);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+        // Функция для загрузки данных о персоне
+        async function loadPerson(personID) {
+            try {
+                const response = await $.ajax({
+                    async: true,
+                    type: 'POST',
+                    url: 'https://ib.komisc.ru/vm/get.php?person',
+                    data: { person: personID },
+                    dataType: 'json',
+                    cache: false
+                });
+
+                console.log('Person data loaded:', response);
+                displayPerson(response.person[0]);
+                displayEvent(response.event);
+            } catch (error) {
+                console.error('Error loading person data:', error);
+                detailsContainer.append('<p>Ошибка загрузки данных о персоне.</p>');
+            }
+        }
+
+        // Функция для отображения данных о персоне
+        function displayPerson(person) { 
+            if (person) {
+                const personHtml = `
+                    <div class="person-details">
+                        <img src="${person.photo || 'images/img-2.jpg'}" alt="${person.F} ${person.I} ${person.O}" class="img-responsive">
+                        <h3>${person.F} ${person.I} ${person.O}</h3>
+                        <p><strong>Должность:</strong> ${person.dol}</p>
+                        <p><strong>Годы рождения:</strong> ${formatDate(person.dayN)} - ${person.dayD === '0000-00-00' ? 'настоящее время': formatDate(person.dayD)}</p>
+                        <p><strong>Комментарий:</strong> ${person.comment}</p>
+                        <p><strong>Публикации:</strong> ${person.publications.replace(/\r\n/g, '<br>')}</p>
+                        <p><strong>Награды:</strong> ${person.awards}</p>
+                    </div>
+                `;
+                detailsContainer.append(personHtml);
+            } else {
+                console.error('Invalid person data format:', person);
+                detailsContainer.append('<p>Информация о персоне не найдена.</p>');
+            }
+        }
+
+        // Функция для отображения событий, в которых участвовала персона
+        function displayEvent(event) {
+            if (event && event.length > 0) {
+                event.forEach(event => {
+                    const eventHtml = `
+                        <div class="person-event">
+                            <h4>${event.Name}</h4>
+                            <p><strong>Дата:</strong> ${formatDate(event.Date)}</p>
+                            <p><a href="about-event.html?id=${event.id}">Подробнее</a></p>
+                        </div>
+                    `;
+                    eventContainer.append(eventHtml);
+                });
+            } else {
+                eventContainer.append('<p>Персона не участвовала в событиях.</p>');
+            }
+        }
+
+        // Получаем ID персоны из URL
+        const personID = getUrlParameter('id');
+        if (personID) {
+            loadPerson(personID);
+        } else {
+            detailsContainer.append('<p>Некорректный ID персоны.</p>');
+        }
+    });
+</script>
+</body>
+</html>
